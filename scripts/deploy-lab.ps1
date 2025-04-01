@@ -1,42 +1,34 @@
-# check-users.ps1
-# Vérifie que les OUs existent, que les utilisateurs ont été créés et que les admins sont bien dans le groupe Administrateurs
+# deploy-lab.ps1
+# Exécute automatiquement tous les scripts dans l'ordre pour créer un lab AD complet
+# Domaine : Loutrel.eu
 
-Import-Module ActiveDirectory
+param (
+    [switch]$DryRun = $false
+)
 
-$baseDN = "DC=Loutrel,DC=eu"
-$ouList = @("OU=CEFIM Tours,$baseDN", "OU=USERS,OU=CEFIM Tours,$baseDN", "OU=ADMINS,OU=CEFIM Tours,$baseDN")
+Write-Host "==== [1/5] Installation du domaine Active Directory ====" -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File .\scripts\install-ad.ps1" -Wait
 
-Write-Host "\n==== Vérification des OUs ====" -ForegroundColor Cyan
-foreach ($ou in $ouList) {
-    if (Get-ADOrganizationalUnit -Filter "DistinguishedName -eq '$ou'" -ErrorAction SilentlyContinue) {
-        Write-Host "✅ OU présente : $ou"
-    } else {
-        Write-Host "❌ OU manquante : $ou" -ForegroundColor Red
-    }
-}
+Write-Host "`n[🔁] Veuillez redémarrer la machine maintenant, puis relancer ce script."
+Write-Host "[❗] Ce script va s'arrêter ici pour permettre le redémarrage."
+exit 0
 
-Write-Host "\n==== Vérification des utilisateurs USERS ====" -ForegroundColor Cyan
-$users = Import-Csv -Path ".\users.csv"
-foreach ($u in $users) {
-    $login = ($u.first_name.Substring(0,1) + $u.last_name).ToLower()
-    $exists = Get-ADUser -Filter "SamAccountName -eq '$login'" -ErrorAction SilentlyContinue
-    if ($exists) {
-        Write-Host "✅ User trouvé : $login"
-    } else {
-        Write-Host "❌ Manquant : $login" -ForegroundColor Red
-    }
-}
+<# --- APRÈS REDÉMARRAGE --- #>
 
-Write-Host "\n==== Vérification des administrateurs ====" -ForegroundColor Cyan
-$admins = Import-Csv -Path ".\admins.csv"
-foreach ($a in $admins) {
-    $login = ($a.first_name.Substring(0,1) + $a.last_name).ToLower()
-    $inGroup = Get-ADGroupMember -Identity "Administrateurs" -Recursive | Where-Object { $_.SamAccountName -eq $login }
-    if ($inGroup) {
-        Write-Host "✅ Admin OK : $login"
-    } else {
-        Write-Host "❌ Admin NON trouvé dans le groupe : $login" -ForegroundColor Red
-    }
-}
+Write-Host "==== [2/5] Création des Unites d'Organisation ====" -ForegroundColor Cyan
+& .\scripts\init-ous.ps1
 
-Write-Host "\n🔍 Vérification terminée." -ForegroundColor Cyan
+Write-Host "==== [3/5] Création des utilisateurs standards ====" -ForegroundColor Cyan
+& .\scripts\create-users.ps1 `
+    -CsvPath ".\users.csv" `
+    -TargetOU "OU=USERS,OU=CEFIM Tours,DC=Loutrel,DC=eu" `
+    -DryRun:$DryRun
+
+Write-Host "==== [4/5] Création des utilisateurs admins ====" -ForegroundColor Cyan
+& .\scripts\create-admins.ps1 `
+    -CsvPath ".\admins.csv" `
+    -TargetOU "OU=ADMINS,OU=CEFIM Tours,DC=Loutrel,DC=eu" `
+    -DryRun:$DryRun
+
+Write-Host "==== [5/5] Vérification finale de l'annuaire ====" -ForegroundColor Cyan
+& .\scripts\check-users.ps1
