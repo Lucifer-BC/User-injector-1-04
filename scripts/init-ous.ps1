@@ -1,15 +1,25 @@
 # init-ous.ps1
-# Crée les unités d'organisation de ton domaine Loutrel.eu
+# Crée les unités d'organisation de ton domaine Loutrel.eu si elles n'existent pas déjà
 
 Import-Module ActiveDirectory
 
-Write-Host "Création de l'OU principale : CEFIM Tours"
-New-ADOrganizationalUnit -Name "CEFIM Tours" -Path "DC=Loutrel,DC=eu"
+# Liste des OUs à créer
+$ous = @(
+    @{ Name = "CEFIM Tours"; Path = "DC=Loutrel,DC=eu" },
+    @{ Name = "USERS"; Path = "OU=CEFIM Tours,DC=Loutrel,DC=eu" },
+    @{ Name = "ADMINS"; Path = "OU=CEFIM Tours,DC=Loutrel,DC=eu" }
+)
 
-Write-Host "Création de l'OU USERS"
-New-ADOrganizationalUnit -Name "USERS" -Path "OU=CEFIM Tours,DC=Loutrel,DC=eu"
+foreach ($ou in $ous) {
+    $fullDN = "OU=$($ou.Name),$($ou.Path)"
+    $exists = Get-ADOrganizationalUnit -Filter "DistinguishedName -eq '$fullDN'" -ErrorAction SilentlyContinue
 
-Write-Host "Création de l'OU ADMINS"
-New-ADOrganizationalUnit -Name "ADMINS" -Path "OU=CEFIM Tours,DC=Loutrel,DC=eu"
+    if (-not $exists) {
+        Write-Host "🟢 Création de l'OU : $($ou.Name)"
+        New-ADOrganizationalUnit -Name $ou.Name -Path $ou.Path -ProtectedFromAccidentalDeletion $false
+    } else {
+        Write-Host "⚠️  L'OU $($ou.Name) existe déjà, aucune action nécessaire."
+    }
+}
 
-Write-Host "✅ Toutes les OUs ont été créées avec succès."
+Write-Host "✅ Toutes les OUs ont été vérifiées et créées si nécessaire."
