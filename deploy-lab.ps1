@@ -28,12 +28,12 @@ Write-Host "==== [3/5] Création des utilisateurs standards ====" -ForegroundCol
     -DryRun:$DryRun
 
 Write-Host ""
-Write-Host "==== [4/5] Création des utilisateurs admins ====" -ForegroundColor Cyan
+Write-Host "==== [4/5] Creation des utilisateurs admins ====" -ForegroundColor Cyan
 & .\scripts\create-admins.ps1 `
     -CsvPath ".\data\admins.csv" `
     -TargetOU "OU=ADMINS,OU=CEFIM Tours,DC=Loutrel,DC=eu" `
     -DryRun:$DryRun
 
 Write-Host ""
-Write-Host "==== [5/5] Vérification finale de l'annuaire ====" -ForegroundColor Cyan
+Write-Host "==== [5/5] Verification finale de l annuaire ====" -ForegroundColor Cyan
 & .\scripts\check-users.ps1 `
