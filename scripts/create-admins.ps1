@@ -11,11 +11,11 @@
 .PARAMETER DryRun
     Active le mode simulation sans créer d'utilisateurs.
 .EXAMPLE
-    .\create-admins.ps1 -CsvPath ".\admins.csv" -TargetOU "OU=ADMIN,OU=HUMANS,DC=mondomaine,DC=local"
+    .\create-admins.ps1 -CsvPath "..\data\admins.csv" -TargetOU "OU=ADMIN,OU=HUMANS,DC=mondomaine,DC=local"
 #>
 
 param (
-    [string]$CsvPath,
+    [string]$CsvPath = "..\data\admins.csv",
     [string]$TargetOU,
     [switch]$DryRun = $true
 )
