@@ -30,5 +30,5 @@ Write-Host "==== [4/5] Création des utilisateurs admins ====" -ForegroundColor 
     -TargetOU "OU=ADMINS,OU=CEFIM Tours,DC=Loutrel,DC=eu" `
     -DryRun:$DryRun
 
-Write-Host "==== [5/5] Vérification finale de l'annuaire ====" -ForegroundColor Cyan
+Write-Host "==== [5/5] Vérification finale de l annuaire ====" -ForegroundColor Cyan
 & .\scripts\check-users.ps1
