@@ -33,29 +33,11 @@ User-injector-1-04/
 | 🔧 VMware Tools | Doit être installé et à jour |
 | 🔌 IP Fixe | La machine doit avoir une IP statique (vérifiée par script) |
 | 📦 Rôle ADDS | Préinstallé ou installé automatiquement |
-| 📂 Accès aux fichiers | Le dossier partagé `User-injector-1-04` doit être monté dans un lecteur (ex : `Z:`) |
-| 🔐 Mot de passe | Un mot de passe vous sera demandé pour le compte admin du domaine |
+| 📂 Accès aux fichiers | Le dossier partagé `User-injector-1-04` doit être monté dans un lecteur (ex : `Z:\`) |
 
-### 2. 📦 Lancement initial (création du domaine)
+### 2. ⚙️ Lancement initial
 
-Ouvre **PowerShell en tant qu’administrateur**, puis exécute :
-
-```powershell
-Set-ExecutionPolicy Unrestricted -Scope Process
-Z:
-Unblock-File .\deploy-lab.ps1
-.\deploy-lab.ps1
-```
-
-Ce script :
-- Vérifie l'IP
-- Installe le rôle ADDS
-- Promeut le serveur en tant que DC (domaine `Loutrel.eu`)
-- ❗ Redémarre automatiquement le serveur après cette étape
-
-### 3. 🔁 Reprise après redémarrage
-
-**Reconnecte-toi**, puis relance ces commandes pour exécuter la suite :
+Ouvre **PowerShell en tant qu’administrateur** sur la VM, puis exécute :
 
 ```powershell
 Set-ExecutionPolicy Unrestricted -Scope Process
@@ -64,20 +46,35 @@ Unblock-File .\deploy-lab.ps1
 .\deploy-lab.ps1
 ```
 
-Cela va enchaîner :
-- La création des OU
-- L'injection des utilisateurs
-- La vérification finale
+Le script va :
+- Vérifier que l’IP est fixe
+- Installer ADDS
+- Demander un mot de passe administrateur pour le domaine
+- Promouvoir automatiquement le serveur en DC (domaine `Loutrel.eu`)
+- Puis redémarrer automatiquement
 
-### 4. 🧪 Mode Simulation (Dry Run)
+**ℹ️ Après le redémarrage, reconnecte-toi et relance les commandes suivantes pour continuer :**
 
-Pour tester **sans créer d’utilisateurs**, tu peux ajouter le paramètre `-DryRun:$true` :
+```powershell
+Set-ExecutionPolicy Unrestricted -Scope Process
+Z:
+Unblock-File .\deploy-lab.ps1
+.\deploy-lab.ps1
+```
+
+La suite du script reprendra automatiquement les étapes 2 à 5 👇
+
+### 3. 🧪 Mode Simulation (Dry Run)
+
+Tous les scripts prennent en charge un mode simulation :
 
 ```powershell
 .\deploy-lab.ps1 -DryRun:$true
 ```
 
-### 5. ✅ Vérification finale
+Cela permet de tester sans rien créer dans l’AD. Parfait pour valider la configuration avant déploiement réel ✅
+
+### 4. ✅ Vérification finale
 
 Le script `check-users.ps1` vérifie que :
 - Les OU existent bien
@@ -85,24 +82,35 @@ Le script `check-users.ps1` vérifie que :
 - Il y a 10 comptes dans ADMINS
 - Les comptes ADMINS sont membres du groupe "Administrateurs"
 
-Un fichier `check-results.log` est généré automatiquement avec le statut final.
+Un fichier `check-results.log` est généré avec le statut final de chaque vérification.
 
 ---
 
 ## 🧪 Tests réalisés
 
 - [x] Installation automatique ADDS
-- [x] Redémarrage du contrôleur de domaine
-- [x] Création sécurisée d’OU imbriquées
+- [x] Reprise du script après redémarrage
+- [x] Création sécurisée des OU
 - [x] Injection de 200 utilisateurs standards
-- [x] Injection de 10 admins + ajout groupe Administrateurs
+- [x] Injection de 10 admins + ajout au groupe "Administrateurs"
 - [x] Vérification finale automatisée
-- [x] Gestion du mode DryRun pour tous les scripts
+- [x] Mode DryRun fonctionnel
+- [x] Gestion d'erreurs basiques (répertoire introuvable, CSV manquant, etc.)
+
+---
+
+## 📦 Commandes Git pour versionner et publier
+
+```bash
+git add .
+git commit -m "✅ Finalisation README et install-ad.ps1 après tests VM"
+git push
+```
 
 ---
 
 ## 🙋 Auteur
 
-Projet réalisé par **Lucifer / Lucie 🦦** dans le cadre d’un TP TSSR - scripting PowerShell et GitHub avec VSCode.
+Projet réalisé par **Lucifer / Lucie 🦦** dans le cadre du TP scripting PowerShell et GitHub VSCode (TSSR).
 
-> Ce projet a été pensé comme un kit de déploiement rapide pour tout environnement lab AD.
+> Ce projet est pensé comme un kit de déploiement rapide d'Active Directory pour environnement de test/lab.
