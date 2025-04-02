@@ -15,18 +15,18 @@ exit 0
 
 <# --- APRÈS REDÉMARRAGE --- #>
 
-Write-Host "==== [2/5] Création des Unites d'Organisation ====" -ForegroundColor Cyan
+Write-Host "==== [2/5] Création des Unités d'Organisation ====" -ForegroundColor Cyan
 & .\scripts\init-ous.ps1
 
 Write-Host "==== [3/5] Création des utilisateurs standards ====" -ForegroundColor Cyan
 & .\scripts\create-users.ps1 `
-    -CsvPath ".\users.csv" `
+    -CsvPath ".\data\users.csv" `
     -TargetOU "OU=USERS,OU=CEFIM Tours,DC=Loutrel,DC=eu" `
     -DryRun:$DryRun
 
 Write-Host "==== [4/5] Création des utilisateurs admins ====" -ForegroundColor Cyan
 & .\scripts\create-admins.ps1 `
-    -CsvPath ".\admins.csv" `
+    -CsvPath ".\data\admins.csv" `
     -TargetOU "OU=ADMINS,OU=CEFIM Tours,DC=Loutrel,DC=eu" `
     -DryRun:$DryRun
 
