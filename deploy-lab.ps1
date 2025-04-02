@@ -36,4 +36,4 @@ Write-Host "==== [4/5] Création des utilisateurs admins ====" -ForegroundColor 
 
 Write-Host ""
 Write-Host "==== [5/5] Vérification finale de l'annuaire ====" -ForegroundColor Cyan
-& .\scripts\check-users.ps1
+& .\scripts\check-users.ps1 `
