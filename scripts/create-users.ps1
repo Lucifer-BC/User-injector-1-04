@@ -1,32 +1,52 @@
+<#
+.SYNOPSIS
+    Crée des utilisateurs depuis un fichier CSV dans une OU cible.
+.DESCRIPTION
+    Crée des comptes utilisateurs standards dans Active Directory à partir d'un CSV.
+    Le mode DryRun permet de simuler les actions sans créer de comptes.
+.PARAMETER CsvPath
+    Chemin vers le fichier CSV contenant les utilisateurs (first_name, last_name, password).
+.PARAMETER TargetOU
+    OU cible dans l’AD où seront créés les comptes.
+.PARAMETER DryRun
+    Si activé, simule les actions sans exécuter réellement.
+.EXAMPLE
+    .\create-users.ps1 -CsvPath "..\data\users.csv" -TargetOU "OU=USERS,OU=CEFIM Tours,DC=Loutrel,DC=eu"
+#>
+
 param (
-    [string]$CsvPath = ".\users.csv",
-    [string]$TargetOU = "OU=USERS,OU=CEFIM Tours,DC=Loutrel,DC=eu",
-    [bool]$DryRun = $true
+    [string]$CsvPath,
+    [string]$TargetOU,
+    [switch]$DryRun = $true
 )
 
 Import-Module ActiveDirectory
 
-Write-Host "[+] Chargement du fichier CSV : $CsvPath"
 $users = Import-Csv -Path $CsvPath
 
 foreach ($user in $users) {
-    $username = "$($user.first_name).$($user.last_name)"
-    $securePassword = ConvertTo-SecureString $user.mdp -AsPlainText -Force
+    $firstName = $user.first_name
+    $lastName = $user.last_name
+    $username = ($firstName.Substring(0,1) + $lastName).ToLower()
+    $password = $user.mdp
 
     if ($DryRun) {
         Write-Host "[SIMULATION] Création de $username dans $TargetOU"
-    }
-    else {
+    } else {
+        Write-Host "[+] Création de l'utilisateur $username dans $TargetOU"
+
         New-ADUser `
             -Name $username `
-            -GivenName $user.first_name `
-            -Surname $user.last_name `
+            -GivenName $firstName `
+            -Surname $lastName `
             -SamAccountName $username `
             -UserPrincipalName "$username@Loutrel.eu" `
-            -AccountPassword $securePassword `
+            -AccountPassword (ConvertTo-SecureString $password -AsPlainText -Force) `
             -Enabled $true `
-            -Path $TargetOU
-
-        Write-Host "✅ Utilisateur $username créé avec succès dans $TargetOU"
+            -Path $TargetOU `
+            -ChangePasswordAtLogon $false `
+            -PasswordNeverExpires $true
     }
 }
+
+Write-Host "✅ Script terminé. Mode simulation : $DryRun"
