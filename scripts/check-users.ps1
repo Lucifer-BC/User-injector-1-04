@@ -51,4 +51,4 @@ if ($admins.Count -ge 10) {
 
 # --- Export optionnel du résumé ---
 $results | Out-File -FilePath "check-results.log" -Encoding UTF8
-Write-Host "\n📁 Rapport généré dans check-results.log"
+Write-Host "`n`t✅ Rapport généré dans check-results.log"
