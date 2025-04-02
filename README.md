@@ -33,70 +33,59 @@ User-injector-1-04/
 | 🔧 VMware Tools | Doit être installé et à jour |
 | 🔌 IP Fixe | La machine doit avoir une IP statique (vérifiée par script) |
 | 📦 Rôle ADDS | Préinstallé ou installé automatiquement |
-| 📂 Accès aux fichiers | Le dossier partagé `User-injector-1-04` doit être monté dans un lecteur (ex : `Z:\`) |
+| 📂 Accès aux fichiers | Le dossier partagé `User-injector-1-04` doit être monté dans un lecteur (ex : `Z:`) |
+| 🔐 Mot de passe | Un mot de passe vous sera demandé pour le compte admin du domaine |
 
-> 🔐 **Important : Débloquer les scripts téléchargés**
->
-> Avant de lancer les scripts, exécute cette commande dans PowerShell pour débloquer `deploy-lab.ps1` :
->
-> ```powershell
-> Unblock-File -Path "Z:\deploy-lab.ps1"
-> ```
+### 2. 📦 Lancement initial (création du domaine)
 
-### 2. ⚙️ Exécution en 2 étapes
-
-#### 🔁 Étape 1 : Lancement initial
-
-Ouvre **PowerShell en tant qu’administrateur** et tape :
+Ouvre **PowerShell en tant qu’administrateur**, puis exécute :
 
 ```powershell
 Set-ExecutionPolicy Unrestricted -Scope Process
 Z:
-Unblock-File -Path "deploy-lab.ps1"
-./deploy-lab.ps1
+Unblock-File .\deploy-lab.ps1
+.\deploy-lab.ps1
 ```
 
-👉 Le script installe le rôle ADDS, promeut le DC et **s'arrête pour laisser le redémarrage se faire**. 
-Tu devras définir un mot de passe d’administrateur de domaine manuellement à cette étape.
+Ce script :
+- Vérifie l'IP
+- Installe le rôle ADDS
+- Promeut le serveur en tant que DC (domaine `Loutrel.eu`)
+- ❗ Redémarre automatiquement le serveur après cette étape
 
-#### 🔄 Étape 2 : Suite du déploiement (après redémarrage)
+### 3. 🔁 Reprise après redémarrage
 
-Une fois redémarré, ouvre à nouveau PowerShell en administrateur et relance simplement :
+**Reconnecte-toi**, puis relance ces commandes pour exécuter la suite :
 
 ```powershell
 Set-ExecutionPolicy Unrestricted -Scope Process
 Z:
-./deploy-lab.ps1
+Unblock-File .\deploy-lab.ps1
+.\deploy-lab.ps1
 ```
 
-Le script détectera que le domaine est déjà en place et enchaînera automatiquement avec :
-- la création des OU,
-- l'injection des utilisateurs,
-- l’ajout au groupe Administrateurs,
-- la vérification finale automatisée.
+Cela va enchaîner :
+- La création des OU
+- L'injection des utilisateurs
+- La vérification finale
 
----
+### 4. 🧪 Mode Simulation (Dry Run)
 
-## 🧪 Mode Simulation (Dry Run)
-
-Tous les scripts supportent un mode simulation sans effet réel dans Active Directory.
-Pour tester avant déploiement :
+Pour tester **sans créer d’utilisateurs**, tu peux ajouter le paramètre `-DryRun:$true` :
 
 ```powershell
-./deploy-lab.ps1 -DryRun:$true
+.\deploy-lab.ps1 -DryRun:$true
 ```
 
----
+### 5. ✅ Vérification finale
 
-## ✅ Vérification finale
+Le script `check-users.ps1` vérifie que :
+- Les OU existent bien
+- Il y a 200 utilisateurs dans USERS
+- Il y a 10 comptes dans ADMINS
+- Les comptes ADMINS sont membres du groupe "Administrateurs"
 
-Le script `check-users.ps1` confirme :
-- La présence des OU
-- 200 utilisateurs standards dans USERS
-- 10 comptes admins dans ADMINS
-- Leur appartenance au groupe "Administrateurs"
-
-Un rapport `check-results.log` est généré à la racine.
+Un fichier `check-results.log` est généré automatiquement avec le statut final.
 
 ---
 
@@ -109,8 +98,6 @@ Un rapport `check-results.log` est généré à la racine.
 - [x] Injection de 10 admins + ajout groupe Administrateurs
 - [x] Vérification finale automatisée
 - [x] Gestion du mode DryRun pour tous les scripts
-- [x] Déblocage manuel des scripts (`Unblock-File`)
-- [x] Test complet sur une VM vierge Windows Server 2022
 
 ---
 
