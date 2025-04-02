@@ -1,90 +1,94 @@
 # 🧠 User Injector - Projet AD Lab
 
-Projet de déploiement automatique d'un environnement Active Directory complet via PowerShell, pour un lab de tests ou un POC en entreprise.
+Projet de déploiement automatique d'un environnement Active Directory complet via PowerShell.
 
 ---
 
-## 📦 Contenu du projet
+## 📁 Arborescence du projet
 
-Ce dépôt contient :
-
-```
+```bash
 User-injector-1-04/
-├── users.csv                # 200 utilisateurs standards (Mockaroo)
-├── admins.csv               # 10 utilisateurs admins (Mockaroo)
-├── deploy-lab.ps1           # Script principal de déploiement
-└── scripts/
-    ├── install-ad.ps1       # Installation d'AD et création du domaine Loutrel.eu
-    ├── init-ous.ps1         # Création des OU CEFIM Tours / USERS / ADMINS
-    ├── create-users.ps1     # Injection des utilisateurs standards
-    ├── create-admins.ps1    # Injection des utilisateurs admins + ajout au groupe Administrateurs
-    └── check-users.ps1      # Script de vérification finale
+├── README.md                 # Ce fichier
+├── deploy-lab.ps1            # Script principal d'automatisation
+├── data/                     # Données utilisateurs CSV
+│   ├── users.csv             # 200 utilisateurs standards (Mockaroo)
+│   └── admins.csv            # 10 comptes admin (Mockaroo)
+└── scripts/                  # Scripts PowerShell liés au lab
+    ├── install-ad.ps1        # Installation AD et création du domaine "Loutrel.eu"
+    ├── init-ous.ps1          # Création des OU : CEFIM Tours / USERS / ADMINS
+    ├── create-users.ps1      # Injection des utilisateurs standards
+    ├── create-admins.ps1     # Injection des utilisateurs admins + ajout groupe "Administrateurs"
+    └── check-users.ps1       # Script de vérification final
 ```
 
 ---
 
-## 🚀 Comment utiliser ce projet ?
+## 🚀 Déroulement du projet
 
-### 1. Prérequis
-- Une machine virtuelle **Windows Server 2022** (ou 2019)
-- PowerShell lancé **en administrateur**
-- Accès Internet pour installer les services AD DS si besoin
-- Le rôle **AD DS** installé via :
+### 1. 📋 Prérequis
 
-```powershell
-Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
-```
+| Élément | Description |
+|--------|-------------|
+| 🖥️ Machine | VM Windows Server 2022 (ou 2019) |
+| 🔧 VMware Tools | Doit être installé et à jour |
+| 🔌 IP Fixe | La machine doit avoir une IP statique (vérifiée par script) |
+| 📦 Rôle ADDS | Préinstallé ou installé automatiquement |
+| 📂 Accès aux fichiers | Le dossier partagé `User-injector-1-04` doit être monté dans un lecteur (ex : `Z:\`) |
 
-- Dossier `User-injector-1-04` présent dans un **lecteur partagé** (ex: `Z:\`) via VMware ou VirtualBox
+### 2. 📦 Installation automatique
 
----
-
-### 2. Lancer le déploiement automatique
-
-Dans PowerShell **en tant qu'administrateur** sur la VM :
+Ouvre **PowerShell en tant qu’administrateur** sur la VM, puis :
 
 ```powershell
 Set-ExecutionPolicy Unrestricted -Scope Process
 cd Z:\User-injector-1-04
-.\deploy-lab.ps1
+./deploy-lab.ps1
 ```
 
-✅ Le script va :
-1. Installer AD et promouvoir la machine en contrôleur de domaine (DC)
-2. Te demander de redémarrer
-3. Puis, à la relance, créer les OU et injecter les utilisateurs
+Ce script :
+- Vérifie que l’IP est fixe
+- Installe le rôle ADDS si nécessaire
+- Promeut le serveur en tant que DC (domaine `Loutrel.eu`)
+- Crée les OU nécessaires
+- Injecte les utilisateurs depuis les fichiers CSV
+- Vérifie que tout est correct
 
-> 💡 Tu peux activer le mode simulation avec :
+### 3. 🧪 Mode Simulation (Dry Run)
+
+Tous les scripts de création prennent en charge un mode simulation, pour tester sans rien écrire dans l’AD :
+
 ```powershell
-.\deploy-lab.ps1 -DryRun:$true
+./deploy-lab.ps1 -DryRun:$true
 ```
 
----
+Tu verras les utilisateurs simulés, les OU à créer, sans aucune modification sur le serveur. Idéal avant déploiement réel ✅
 
-### 3. Vérification automatique
+### 4. ✅ Vérification finale
 
 Le script `check-users.ps1` vérifie que :
-- Les OU sont bien créées
-- 200 utilisateurs sont bien dans USERS
-- 10 admins sont bien dans ADMINS
-- Tous les admins sont dans le groupe **Administrateurs**
+- Les OU existent bien
+- Il y a 200 utilisateurs dans USERS
+- Il y a 10 comptes dans ADMINS
+- Les comptes ADMINS sont membres du groupe "Administrateurs"
 
-📁 Il génère un fichier `check-results.log` avec un récapitulatif.
+Un fichier `check-results.log` est généré automatiquement avec le statut final.
 
 ---
 
 ## 🧪 Tests réalisés
-- [x] Installation d’Active Directory (AD DS)
-- [x] Redémarrage automatique intégré dans le processus
-- [x] Création automatique des OUs (y compris imbriquées)
+
+- [x] Installation automatique ADDS
+- [x] Redémarrage du contrôleur de domaine
+- [x] Création sécurisée d’OU imbriquées
 - [x] Injection de 200 utilisateurs standards
-- [x] Injection de 10 comptes admins
-- [x] Ajout automatique des admins au groupe local "Administrateurs"
-- [x] Rapport de validation final automatisé
+- [x] Injection de 10 admins + ajout groupe Administrateurs
+- [x] Vérification finale automatisée
+- [x] Gestion du mode DryRun pour tous les scripts
 
 ---
 
-## 🙋 Créateur
-Lucie / Lucifer : loutre de l'enfer 🦦🔥
+## 🙋 Auteur
 
-> Projet réalisé dans le cadre d'un TP de scripting PowerShell débutant à avancé, avec Git et VSCode. Ce projet vise à démontrer l'automatisation d'une infrastructure AD minimaliste dans un environnement de test local.
+Projet réalisé par **Lucifer 🦦** dans le cadre d’un TP TSSR - scripting PowerShell et GitHub avec VSCode.
+
+> Ce projet a été pensé comme un kit de déploiement rapide pour tout environnement lab AD.
