@@ -27,25 +27,34 @@ User-injector-1-04/
 
 ### 1. 📋 Prérequis
 
-| Élément | Description |
-|--------|-------------|
-| 🖥️ Machine | VM Windows Server 2022 (ou 2019) |
-| 🔧 VMware Tools | Doit être installé et à jour (sinon, pas de dossier partagé possible) |
-| 🔌 IP Fixe | La machine doit avoir une IP statique (le script vérifiera) |
-| 📦 Rôle ADDS | Sera installé automatiquement si manquant |
-| 📂 Dossier partagé | Le dossier contenant ce projet doit être partagé dans VMware (ex : Z:) |
+| Élément            | Description                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| 🖥️ Machine         | VM Windows Server 2022 (ou 2019)                                             |
+| 🔧 VMware Tools     | Doit être installé et à jour                                                 |
+| 🔌 IP Fixe          | La machine doit avoir une IP statique (sinon le script refusera de s'exécuter) |
+| 📦 Rôle ADDS        | Non installé (le script le fera automatiquement)                             |
+| 📂 Dossier partagé  | Le dossier `User-injector-1-04` doit être partagé dans VMware Workstation    |
 
-#### ⚙️ Configuration du partage VMware (obligatoire !) :
-1. Éteindre la VM.
-2. Dans VMware Workstation > `Settings` > `Options` > `Shared Folders`
-3. Activer le partage > Ajouter le dossier `User-injector-1-04`
-4. Le dossier sera visible dans la VM sous une lettre (`Z:` en général).
+### 2. 🧭 Monter le dossier partagé en lecteur réseau
+
+Dans VMware Workstation :
+- Va dans **Settings** de ta VM (Ctrl+D)
+- Onglet **Options > Shared Folders**
+- Active **Always enabled**
+- Ajoute le dossier contenant `User-injector-1-04`
+
+Dans la VM, PowerShell :
+```powershell
+net use Z: "\\vmware-host\Shared Folders\User-injector-1-04"
+```
+
+Vérifie que le lecteur `Z:` apparaît bien avec `Get-PSDrive`
 
 ---
 
-### 2. 🚀 Installation complète
+### 3. 🛠️ Lancer le déploiement automatique
 
-Ouvre **PowerShell en tant qu'administrateur** dans la VM, et exécute **exactement ces commandes** :
+Dans PowerShell (administrateur) :
 
 ```powershell
 Set-ExecutionPolicy Unrestricted -Scope Process
@@ -54,72 +63,67 @@ Unblock-File .\deploy-lab.ps1
 .\deploy-lab.ps1
 ```
 
-#### 🛑 Ce que fait ce script automatiquement :
-- Vérifie que l’adresse IP est fixe
-- Installe le rôle ADDS si besoin
-- Promeut le serveur en tant que contrôleur de domaine (domaine `Loutrel.eu`)
-- Redémarre automatiquement la machine 🌀
+📌 À la première exécution, le script :
+- Vérifie l’IP fixe (sinon il s'arrête)
+- Installe le rôle ADDS
+- Te demande un mot de passe SafeMode
+- Crée et configure le domaine `Loutrel.eu`
+- **Redémarre automatiquement la machine**
 
----
-
-### 3. 🔁 Après le redémarrage automatique
-
-➡️ Une fois reconnecté à la session **administrateur du domaine**, **rouvre PowerShell en administrateur** et relance les commandes :
+🔁 **Après redémarrage**, reconnecte-toi sur la session `Administrateur`, puis :
 
 ```powershell
 Set-ExecutionPolicy Unrestricted -Scope Process
 Z:
+Unblock-File .\deploy-lab.ps1
 .\deploy-lab.ps1
 ```
 
-🟢 Cette fois, il va automatiquement :
-- Créer les OU : `CEFIM Tours`, `USERS`, `ADMINS`
-- Injecter les utilisateurs depuis les fichiers CSV (`users.csv`, `admins.csv`)
-- Ajouter les comptes admins dans le groupe "Administrateurs"
-- Lancer la vérification finale ✅
+✅ Cette fois, les étapes suivantes se déclencheront :
+- Création des OU `USERS` et `ADMINS`
+- Injection des utilisateurs depuis `data/users.csv` et `data/admins.csv`
+- Vérification finale de l'annuaire
 
 ---
 
 ### 4. 🧪 Mode Simulation (Dry Run)
 
-Tu peux tester tout le processus sans rien créer avec :
-
+Pour tester sans rien créer dans l’AD :
 ```powershell
 .\deploy-lab.ps1 -DryRun:$true
 ```
-
-Le mode simulation affichera toutes les actions **sans les exécuter réellement** dans l’annuaire.
+Tous les scripts de création sont compatibles DryRun.
 
 ---
 
 ### 5. ✅ Vérification finale
 
-Le script `check-users.ps1` est lancé automatiquement. Il vérifie :
-- Que les OU existent bien
-- Que 200 utilisateurs sont présents dans USERS
-- Que 10 comptes sont présents dans ADMINS
-- Que tous les ADMINS sont membres du groupe local "Administrateurs"
+Le script `check-users.ps1` (exécuté automatiquement) vérifie que :
+- Les OU existent
+- 200 utilisateurs standards sont présents
+- 10 comptes admins sont créés
+- Les comptes admins sont membres du groupe "Administrateurs"
 
-Il génère un fichier `check-results.log` avec les résultats.
+Un fichier `check-results.log` est généré dans le dossier principal.
 
 ---
 
 ## 🧪 Tests réalisés
 
-- [x] Vérification IP Fixe (fail en DHCP)
+- [x] Détection IP non statique
 - [x] Installation automatique ADDS
-- [x] Redémarrage du serveur après promotion
-- [x] Création sécurisée des OU
-- [x] Injection de 200 utilisateurs standards (Mockaroo)
-- [x] Injection de 10 comptes admins
-- [x] Ajout au groupe Administrateurs
-- [x] Vérification complète via `check-users.ps1`
-- [x] Mode simulation (DryRun)
+- [x] Redémarrage forcé après promotion
+- [x] Création sécurisée d’OU imbriquées
+- [x] Injection de 200 utilisateurs standards
+- [x] Injection de 10 admins + ajout groupe Administrateurs
+- [x] Vérification finale automatisée
+- [x] Gestion du mode DryRun pour tous les scripts
+- [x] Test depuis lecteur réseau Z: (VMware Shared Folders)
 
 ---
 
 ## 🙋 Auteur
 
-Projet réalisé par **Lucifer / Lucie 🦦** dans le cadre du TP PowerShell & GitHub du TSSR.
+Projet réalisé par **Lucifer / Lucie 🦦** dans le cadre d’un TP TSSR - scripting PowerShell et GitHub avec VSCode.
 
-> Ce dépôt Git peut être utilisé pour tester, auditer ou enseigner un déploiement automatisé Active Directory dans un environnement local Windows Server.
+> Ce projet est un kit complet de déploiement AD pour environnements de test ou formations. 🤓
