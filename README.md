@@ -1,12 +1,12 @@
 # 🧠 User Injector - Projet AD Lab
 
-Projet de déploiement automatique d'un environnement Active Directory complet via PowerShell.
+Projet de déploiement automatique d'un environnement Active Directory complet via PowerShell, avec mode simulation intégré.
 
 ---
 
 ## 📁 Arborescence du projet
 
-```bash
+```
 User-injector-1-04/
 ├── README.md                 # Ce fichier
 ├── deploy-lab.ps1            # Script principal d'automatisation
@@ -27,68 +27,87 @@ User-injector-1-04/
 
 ### 1. 📋 Prérequis
 
-| Élément | Description |
-|--------|-------------|
-| 🖥️ Machine | VM Windows Server 2022 (ou 2019) |
-| 🔧 VMware Tools | Doit être installé et à jour |
-| 🔌 IP Fixe | La machine doit avoir une IP statique (vérifiée par script) |
-| 📦 Rôle ADDS | Préinstallé ou installé automatiquement |
-| 📂 Accès aux fichiers | Le dossier partagé `User-injector-1-04` doit être monté dans un lecteur (ex : `Z:\`) |
+| Élément           | Description                                                             |
+|-------------------|-------------------------------------------------------------------------|
+| 🖥️ Machine        | VM Windows Server 2022 (ou 2019)                                        |
+| 🔧 VMware Tools   | Doivent être installés et à jour                                        |
+| 🔌 IP Fixe         | L'adresse IP doit être définie manuellement                            |
+| 📦 Rôle ADDS       | Sera installé automatiquement par le script                            |
+| 📂 Dossier partagé | Le dossier `User-injector-1-04` doit être partagé avec la VM           |
+| 💽 Lecteur Z:\     | Le dossier partagé doit apparaître dans la VM comme `Z:\`              |
 
-### 2. 📦 Installation automatique
+> 🧠 Vérifie les **VMware Shared Folders** : Settings > Options > Shared folders > Always enabled
 
-Ouvre **PowerShell en tant qu’administrateur** sur la VM, puis :
+---
+
+### 2. 🛠️ Lancement de l'installation automatique
+
+Dans PowerShell (en **mode administrateur**) dans la VM :
 
 ```powershell
 Set-ExecutionPolicy Unrestricted -Scope Process
-cd Z:\User-injector-1-04
-./deploy-lab.ps1
+Z:
+.\deploy-lab.ps1
 ```
 
-Ce script :
-- Vérifie que l’IP est fixe
-- Installe le rôle ADDS si nécessaire
-- Promeut le serveur en tant que DC (domaine `Loutrel.eu`)
-- Crée les OU nécessaires
-- Injecte les utilisateurs depuis les fichiers CSV
-- Vérifie que tout est correct
+Le script va automatiquement :
 
-### 3. 🧪 Mode Simulation (Dry Run)
+1. Vérifier que l’IP est fixe  
+2. Installer le rôle ADDS si nécessaire  
+3. Promouvoir le serveur en contrôleur de domaine (domaine `Loutrel.eu`)  
+4. Demander un redémarrage  
+5. Créer les OU nécessaires  
+6. Injecter les utilisateurs standards  
+7. Injecter les admins et les ajouter au groupe "Administrateurs"  
+8. Lancer la vérification finale
 
-Tous les scripts de création prennent en charge un mode simulation, pour tester sans rien écrire dans l’AD :
+---
+
+### 3. 🧪 Mode Simulation (`-DryRun`)
+
+Tous les scripts prennent en charge un **mode simulation** :
 
 ```powershell
-./deploy-lab.ps1 -DryRun:$true
+Z:
+.\deploy-lab.ps1 -DryRun:$true
 ```
 
-Tu verras les utilisateurs simulés, les OU à créer, sans aucune modification sur le serveur. Idéal avant déploiement réel ✅
+Ce mode :
 
-### 4. ✅ Vérification finale
+- Affiche les actions prévues  
+- Ne modifie **rien** dans Active Directory
+
+✅ Idéal pour valider que tout est prêt avant déploiement réel.
+
+---
+
+### 4. ✅ Vérification finale automatique
 
 Le script `check-users.ps1` vérifie que :
-- Les OU existent bien
-- Il y a 200 utilisateurs dans USERS
-- Il y a 10 comptes dans ADMINS
-- Les comptes ADMINS sont membres du groupe "Administrateurs"
 
-Un fichier `check-results.log` est généré automatiquement avec le statut final.
+- Les OU ont bien été créées  
+- 200 utilisateurs sont présents dans `USERS`  
+- 10 comptes admins dans `ADMINS`  
+- Les comptes admins sont bien membres du groupe "Administrateurs"
+
+📄 Un rapport est généré : `check-results.log`
 
 ---
 
 ## 🧪 Tests réalisés
 
-- [x] Installation automatique ADDS
-- [x] Redémarrage du contrôleur de domaine
-- [x] Création sécurisée d’OU imbriquées
-- [x] Injection de 200 utilisateurs standards
-- [x] Injection de 10 admins + ajout groupe Administrateurs
-- [x] Vérification finale automatisée
-- [x] Gestion du mode DryRun pour tous les scripts
+- [x] Installation automatique du rôle ADDS  
+- [x] Redémarrage du serveur DC intégré  
+- [x] Création d’OU imbriquées : CEFIM Tours > USERS / ADMINS  
+- [x] Injection de 200 utilisateurs standards  
+- [x] Injection de 10 admins + ajout dans "Administrateurs"  
+- [x] Vérification automatisée de la structure  
+- [x] Mode `DryRun` fonctionnel sur tous les scripts
 
 ---
 
 ## 🙋 Auteur
 
-Projet réalisé par **Lucifer 🦦** dans le cadre d’un TP TSSR - scripting PowerShell et GitHub avec VSCode.
+Projet réalisé par **Lucifer 🦦** dans le cadre d’un TP TSSR – scripting PowerShell et GitHub avec VSCode.
 
-> Ce projet a été pensé comme un kit de déploiement rapide pour tout environnement lab AD.
+> 🧰 Ce projet a été pensé comme un kit de déploiement rapide pour tout environnement lab AD.
